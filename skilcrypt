@@ -1,0 +1,52 @@
+__skilcrypt_ball() {
+    [[ -f $@ ]] && {
+        printf '%s\n' 'skilcrypt ball Expected folder'
+        return
+    }
+    compressgz $@
+;}
+
+__skilcrypt_files() {
+    printf '%s\n' 'Enter some LONG password to protect your files.'
+    printf '%s\n' 'Make sure to remember your password !'
+    read -s -r da_pazZz
+
+    while [[ -z ${da_pazZz} ]]
+    do
+        printf '%s\n' 'Enter some LONG password to protect your files.'
+        printf '%s\n' 'Make sure to remember your password !'
+        read -s -r da_pazZz
+    done
+
+    printf '%s\n' 'Encrypting... please wait'
+
+
+    find $@ -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch -q --passphrase \
+        ${da_pazZz} --cert-digest-algo SHA512 --cipher-algo AES256 \
+        --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
+        --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
+
+    # del orig files
+    find $@ -type f ! -name "*.gpg" -print0 | xargs -0 rm
+
+;}
+
+skilcrypt() {
+    [[ -z $1 ]] && {
+        printf '%s\n' 'Come again ?!'
+        return
+    }
+
+    [[ -z $2 ]] && {
+        printf '%s\n' 'Come again ?!'
+        return
+    }
+
+    case $1 in
+        ball)     shift; __skilcrypt_ball $@     ;;
+        folder)   shift; __skilcrypt_files $@    ;;
+    esac
+
+
+
+;}
