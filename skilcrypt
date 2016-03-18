@@ -1,52 +1,70 @@
-__skilcrypt_ball() {
-    [[ -f $@ ]] && {
-        printf '%s\n' 'skilcrypt ball Expected folder'
-        return
-    }
-    compressgz $@
-;}
+__printf() { printf '%s\n' $@ }
 
-__skilcrypt_files() {
-    printf '%s\n' 'Enter some LONG password to protect your files.'
-    printf '%s\n' 'Make sure to remember your password !'
+__skilcrypt_rmcmd() {
+    __da_cmd=$1
+    shift
+
+    [[ ${__da_cmd} == "src" ]] && {
+        find $@ -type f ! -name "*.gpg" -print0 | xargs -0 rm --force
+    } || {
+        find $@ -type f -name "*.gpg" -print0 | xargs -0 rm --force
+    }
+}
+
+__skilcrypt_invoke_gpg() {
+    __printf "Enter some LONG password to $1 your files."
+    __printf 'Make sure to remember your password !'
     read -s -r da_pazZz
 
     while [[ -z ${da_pazZz} ]]
     do
-        printf '%s\n' 'Enter some LONG password to protect your files.'
-        printf '%s\n' 'Make sure to remember your password !'
+        __printf "Enter some LONG password to $1 your files."
+        __printf 'Make sure to remember your password !'
         read -s -r da_pazZz
     done
 
-    printf '%s\n' 'Encrypting... please wait'
+    __printf 'Working... please wait'
 
+    __da_action=$1
+    shift
 
-    find $@ -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch -q --passphrase \
-        ${da_pazZz} --cert-digest-algo SHA512 --cipher-algo AES256 \
-        --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
-        --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
+    [[ ${__da_action} == "encrypt" ]] && {
+        find $@ -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
+            --passphrase ${da_pazZz} --cert-digest-algo SHA512 --cipher-algo AES256 \
+            --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
+            --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
+    } || {
+        find $@ -type f -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
+            --passphrase ${da_pazZz} {}
+    }
 
-    # del orig files
-    find $@ -type f ! -name "*.gpg" -print0 | xargs -0 rm
+    __printf 'Done !'
 
-;}
+    unset da_pazZz
+}
 
 skilcrypt() {
-    [[ -z $1 ]] && {
-        printf '%s\n' 'Come again ?!'
+
+    __targets=('encrypt' 'decrypt' 'rmsrc' 'rmgpg')
+    [[ -z $1 ]] || [[ ! " ${__targets[@]} " =~ " $1 " ]] && {
+        __printf 'skilcrypt [option] target(s)'
+        __printf 'Available options: encrypt, decrypt, rmsrc, rmgpg'
+        __printf 'Think before you invoke the rmsrc and rmgpg options !'
+        __printf 'rmsrc  --  remove the source files and leave only the encrypted one'
+        __printf 'rmgpg  --  remove the decrypted files and leave only the source one'
         return
     }
 
     [[ -z $2 ]] && {
-        printf '%s\n' 'Come again ?!'
+        __printf 'The target cannot be empty.'
         return
     }
 
     case $1 in
-        ball)     shift; __skilcrypt_ball $@     ;;
-        folder)   shift; __skilcrypt_files $@    ;;
+        encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   $@      ;;
+        decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   $@      ;;
+        rmsrc)       shift;  __skilcrypt_rmcmd        'src'       $@      ;;
+        rmgpg)       shift;  __skilcrypt_rmcmd        'gpg'       $@      ;;
     esac
 
-
-
-;}
+}
