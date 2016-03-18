@@ -1,6 +1,6 @@
 # skilcrypt
 
-Want cross platform encryption ? Read on.
+Want cross platform encryption and decryption program ? Read on.
 
 Wrote this GnuPG wrapper because I wanted **not only** to encrypt my files, but to access them from other operating systems.
 
