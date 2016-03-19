@@ -28,7 +28,9 @@ As I said the program will not overwrite your files, so if **foo.tar** and **foo
 Before invoking the **rmsrc** option I would advise you to test just one randomly encrypted file **bar.gpg** (for example) by typing `cp -r bar.gpg /tmp; gpg /tmp/bar.gpg` and once it is decrypted with the correct password you can proceed ahead and remove `skilcrypt rmsrc bar` the source file **bar** that was encrypted in **bar.gpg**.
 
 Available options: encrypt, decrypt, rmsrc, rmgpg
+
 rmsrc  --  remove the source files and leave only the encrypted one
+
 rmgpg  --  remove the encrypted files and leave only the source one
 
 The program can handle single/multiple filenames and paths.
@@ -42,3 +44,5 @@ skillcrypt encrypt random-file.tbz2 folder1 "New File.tar.gz" folder2 'New Folde
 
 ## Test
 On my computer (amd athlon x3 455, 8GB DDR3 1600, Corsair ForceGT 120GB 2011) skilcrypt encrypts single **tar archive** that contains 11 000 files and is 1 GB in size in matter of 4 seconds. Repeating the same test but without `--compress-algo 0` results in ... 5 minutes.
+
+Now I can upload the encrypted files to any "cloud", encrypt/decrypt them in my smartphone and re-upload them. Also my hands are not tied to XYZ operating system.
