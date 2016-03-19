@@ -1,4 +1,23 @@
-__printf() { printf '%s\n' $@ }
+#!/usr/bin/env bash
+
+# Copyright 03/19/2016 Aaron Caffrey https://github.com/wifiextender
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+__printf() { printf '%s\n' "$@" ;}
 
 __skilcrypt_rmcmd() {
     __da_cmd=$1
@@ -12,14 +31,10 @@ __skilcrypt_rmcmd() {
 }
 
 __skilcrypt_invoke_gpg() {
-    __printf "Enter some LONG password to $1 your files."
-    __printf 'Make sure to remember your password !'
-    read -s -r da_pazZz
-
     while [[ -z ${da_pazZz} ]]
     do
-        __printf "Enter some LONG password to $1 your files."
-        __printf 'Make sure to remember your password !'
+        __printf "Enter your password to $1 your files."
+        __printf 'Make sure that you remember your password !'
         read -s -r da_pazZz
     done
 
@@ -43,20 +58,20 @@ __skilcrypt_invoke_gpg() {
     unset da_pazZz
 }
 
-skilcrypt() {
-
+skilcrypt_main() {
+    declare -a __targets
     __targets=('encrypt' 'decrypt' 'rmsrc' 'rmgpg')
     [[ -z $1 ]] || [[ ! " ${__targets[@]} " =~ " $1 " ]] && {
         __printf 'skilcrypt [option] target(s)'
         __printf 'Available options: encrypt, decrypt, rmsrc, rmgpg'
         __printf 'Think before you invoke the rmsrc and rmgpg options !'
         __printf 'rmsrc  --  remove the source files and leave only the encrypted one'
-        __printf 'rmgpg  --  remove the decrypted files and leave only the source one'
+        __printf 'rmgpg  --  remove the encrypted files and leave only the source one'
         return
     }
 
     [[ -z $2 ]] && {
-        __printf 'The target cannot be empty.'
+        __printf 'The target(s) cannot be empty.'
         return
     }
 
@@ -68,3 +83,5 @@ skilcrypt() {
     esac
 
 }
+
+skilcrypt_main $@
