@@ -24,10 +24,12 @@ __skilcrypt_rmcmd() {
     shift
 
     [[ ${__da_cmd} == "src" ]] && {
-        find $@ -type f ! -name "*.gpg" -print0 | xargs -0 rm --force
+        find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 rm --force
     } || {
-        find $@ -type f -name "*.gpg" -print0 | xargs -0 rm --force
+        find "$@" -type f -name "*.gpg" -print0 | xargs -0 rm --force
     }
+
+    __printf 'Done !'
 }
 
 __skilcrypt_invoke_gpg() {
@@ -44,12 +46,12 @@ __skilcrypt_invoke_gpg() {
     shift
 
     [[ ${__da_action} == "encrypt" ]] && {
-        find $@ -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
+        find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
             --passphrase ${da_pazZz} --cert-digest-algo SHA512 --cipher-algo AES256 \
             --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
             --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
     } || {
-        find $@ -type f -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
+        find "$@" -type f -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
             --passphrase ${da_pazZz} {}
     }
 
@@ -76,12 +78,12 @@ skilcrypt_main() {
     }
 
     case $1 in
-        encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   $@      ;;
-        decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   $@      ;;
-        rmsrc)       shift;  __skilcrypt_rmcmd        'src'       $@      ;;
-        rmgpg)       shift;  __skilcrypt_rmcmd        'gpg'       $@      ;;
+        encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   "$@"      ;;
+        decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   "$@"      ;;
+        rmsrc)       shift;  __skilcrypt_rmcmd        'src'       "$@"      ;;
+        rmgpg)       shift;  __skilcrypt_rmcmd        'gpg'       "$@"      ;;
     esac
 
 }
 
-skilcrypt_main $@
+skilcrypt_main "$@"
