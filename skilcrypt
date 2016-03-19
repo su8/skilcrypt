@@ -33,26 +33,44 @@ __skilcrypt_rmcmd() {
 }
 
 __skilcrypt_invoke_gpg() {
-    while [[ -z ${da_pazZz} ]]
-    do
-        __printf "Enter your password to $1 your files."
-        __printf 'Make sure that you remember your password !'
-        read -s -r da_pazZz
-    done
-
-    __printf 'Working... please wait'
-
     __da_action=$1
     shift
 
+    [[ $1 == "pwf" ]] && {
+        shift
+
+        da_pazZz=$1
+        [[ ! -f ${da_pazZz} ]] && {
+            __printf "Ooops, ${da_pazZz} doesnt exist."
+            __printf 'Point the correct location of your password.'
+            return
+        }
+
+        _pw_switch='--passphrase-file'
+        shift
+
+    } || {
+        while [[ -z ${da_pazZz} ]]
+        do
+            __printf "Enter your password to ${__da_action} your files."
+            __printf 'Make sure that you remember your password !'
+            read -s -r da_pazZz
+        done
+
+        _pw_switch='--passphrase'
+    }
+
+    __printf 'Working... please wait'
+
     [[ ${__da_action} == "encrypt" ]] && {
-        find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
-            --passphrase ${da_pazZz} --cert-digest-algo SHA512 --cipher-algo AES256 \
+        find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 -I{} \
+            gpg --batch --quiet ${_pw_switch} ${da_pazZz} \
+            --cert-digest-algo SHA512 --cipher-algo AES256 \
             --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
             --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
     } || {
-        find "$@" -type f -name "*.gpg" -print0 | xargs -0 -I{} gpg --batch --quiet \
-            --passphrase ${da_pazZz} {}
+        find "$@" -type f -name "*.gpg" -print0 | xargs -0 -I{} \
+            gpg --batch --quiet ${_pw_switch} ${da_pazZz} {}
     }
 
     __printf 'Done !'
@@ -65,7 +83,14 @@ skilcrypt_main() {
     __targets=('encrypt' 'decrypt' 'rmsrc' 'rmgpg')
     [[ -z $1 ]] || [[ ! " ${__targets[@]} " =~ " $1 " ]] && {
         __printf 'skilcrypt [option] target(s)'
-        __printf 'Available options: encrypt, decrypt, rmsrc, rmgpg'
+        __printf 'Available options: encrypt [pwf], decrypt [pwf], rmsrc, rmgpg'
+        __printf ''
+        __printf 'Non-interactive (password stored in file) encryption/decryption:'
+        __printf 'skilcrypt encrypt/decrypt pwf /tmp/password file1 file2 folder3'
+        __printf ''
+        __printf 'Interactive (ask for password) encryption/decryption:'
+        __printf 'skilcrypt encrypt/decrypt file1 file2 folder3'
+        __printf ''
         __printf 'Think before you invoke the rmsrc and rmgpg options !'
         __printf 'rmsrc  --  remove the source files and leave only the encrypted one'
         __printf 'rmgpg  --  remove the encrypted files and leave only the source one'

@@ -45,6 +45,20 @@ skillcrypt encrypt random-file.tbz2 folder1 "New File.tar.gz" folder2 'New Folde
 
 ```
 
+## Non-interactive encryption/decryption
+Non-interactive encryption and decryption is available.
+
+Basically you combine **encrypt** or **decrypt** with **pwf** followed by the location of your password and the rest arguments are filenames or paths.
+
+The choice is up to you if you want to use non-interactive encryption/decryption or not.
+
+```
+
+skilcrypt encrypt/decrypt pwf /tmp/password file1 file2 folder3
+
+```
+
+
 ## Test
 On my computer (amd athlon x3 455, 8GB DDR3 1600, Corsair ForceGT 120GB 2011) skilcrypt encrypts single **tar archive** that contains 11 000 files and is 1 GB in size in matter of 4 seconds. Repeating the same test but without `--compress-algo 0` results in ... 5 minutes.
 
