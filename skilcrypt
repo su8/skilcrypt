@@ -102,6 +102,18 @@ skilcrypt_main() {
         return
     }
 
+    [[ $2 == "pwf" ]] && {
+        [[ -z $3 ]] || [[ ! -f $3 ]] && {
+            __printf 'Point the correct location of your password.'
+            return
+        }
+
+        [[ -z $4 ]] && {
+            __printf "What are we going to $1 ?"
+            return
+        }
+    }
+
     case $1 in
         encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   "$@"      ;;
         decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   "$@"      ;;
