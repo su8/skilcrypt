@@ -29,15 +29,15 @@ __skilcrypt_rmcmd() {
 }
 
 __skilcrypt_invoke_gpg() {
-    __da_action=$1
+    _da_action=$1
     shift
 
     [[ $1 == "pwf" ]] && {
         shift
 
-        da_pazZz=$1
-        [[ ! -f ${da_pazZz} ]] && {
-            __printf "Ooops, ${da_pazZz} doesnt exist."
+        _da_pazZz=$1
+        [[ ! -f ${_da_pazZz} ]] && {
+            __printf "Ooops, ${_da_pazZz} doesnt exist."
             __printf 'Point the correct location of your password.'
             return
         }
@@ -46,11 +46,11 @@ __skilcrypt_invoke_gpg() {
         shift
 
     } || {
-        while [[ -z ${da_pazZz} ]]
+        while [[ -z ${_da_pazZz} ]]
         do
-            __printf "Enter your password to ${__da_action} your files."
+            __printf "Enter your password to ${_da_action} your files."
             __printf 'Make sure that you remember your password !'
-            read -s -r da_pazZz
+            read -s -r _da_pazZz
         done
 
         _pw_switch='--passphrase'
@@ -58,26 +58,26 @@ __skilcrypt_invoke_gpg() {
 
     __printf 'Working... please wait'
 
-    [[ ${__da_action} == "encrypt" ]] && {
+    [[ ${_da_action} == "encrypt" ]] && {
         find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 -I{} \
-            gpg --batch --quiet ${_pw_switch} ${da_pazZz} \
+            gpg --batch --quiet ${_pw_switch} ${_da_pazZz} \
             --cert-digest-algo SHA512 --cipher-algo AES256 \
             --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
             --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
     } || {
         find "$@" -type f -name "*.gpg" -print0 | xargs -0 -I{} \
-            gpg --batch --quiet ${_pw_switch} ${da_pazZz} {}
+            gpg --batch --quiet ${_pw_switch} ${_da_pazZz} {}
     }
 
     __printf 'Done !'
 
-    unset da_pazZz
+    unset _da_pazZz
 }
 
 skilcrypt_main() {
-    declare -a __targets
-    __targets=('encrypt' 'decrypt' 'rmsrc' 'rmgpg')
-    [[ -z $1 ]] || [[ ! " ${__targets[@]} " =~ " $1 " ]] && {
+    declare -a _targets
+    _targets=('encrypt' 'decrypt' 'rmsrc' 'rmgpg')
+    [[ -z $1 ]] || [[ ! " ${_targets[@]} " =~ " $1 " ]] && {
         __printf 'skilcrypt [option] target(s)'
         __printf 'Available options: encrypt [pwf], decrypt [pwf], rmsrc, rmgpg'
         __printf ''
@@ -110,11 +110,14 @@ skilcrypt_main() {
         }
     }
 
-    case $1 in
-        encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   "$@"      ;;
-        decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   "$@"      ;;
-        rmsrc)       shift;  __skilcrypt_rmcmd        '!'         "$@"      ;;
-        rmgpg)       shift;  __skilcrypt_rmcmd        ''          "$@"      ;;
+    _sw_opt=$1
+    shift
+
+    case ${_sw_opt} in
+        encrypt)     __skilcrypt_invoke_gpg   'encrypt'   "$@"      ;;
+        decrypt)     __skilcrypt_invoke_gpg   'decrypt'   "$@"      ;;
+        rmsrc)       __skilcrypt_rmcmd        '!'         "$@"      ;;
+        rmgpg)       __skilcrypt_rmcmd        ''          "$@"      ;;
     esac
 
 }
