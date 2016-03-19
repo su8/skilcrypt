@@ -20,14 +20,10 @@
 __printf() { printf '%s\n' "$@" ;}
 
 __skilcrypt_rmcmd() {
-    __da_cmd=$1
+    _switch_opt="$1"
     shift
 
-    [[ ${__da_cmd} == "src" ]] && {
-        find "$@" -type f ! -name "*.gpg" -print0 | xargs -0 rm --force
-    } || {
-        find "$@" -type f -name "*.gpg" -print0 | xargs -0 rm --force
-    }
+    find "$@" -type f ${_switch_opt} -name "*.gpg" -print0 | xargs -0 rm --force
 
     __printf 'Done !'
 }
@@ -117,8 +113,8 @@ skilcrypt_main() {
     case $1 in
         encrypt)     shift;  __skilcrypt_invoke_gpg   'encrypt'   "$@"      ;;
         decrypt)     shift;  __skilcrypt_invoke_gpg   'decrypt'   "$@"      ;;
-        rmsrc)       shift;  __skilcrypt_rmcmd        'src'       "$@"      ;;
-        rmgpg)       shift;  __skilcrypt_rmcmd        'gpg'       "$@"      ;;
+        rmsrc)       shift;  __skilcrypt_rmcmd        '!'         "$@"      ;;
+        rmgpg)       shift;  __skilcrypt_rmcmd        ''          "$@"      ;;
     esac
 
 }
