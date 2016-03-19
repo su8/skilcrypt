@@ -25,13 +25,17 @@ Feel free to use the **rmgpg** and **rmsrc** options once you verified that ever
 
 As I said the program will not overwrite your files, so if **foo.tar** and **foo.tar.gpg** exist in same folder and you try to encrypt **foo.tar** or decrypt **foo.tar.gpg** you won't be able to fuck up those files. The choice what to do next is up to you.
 
-Before invoking the **rmsrc** option I would advise you to test just one randomly encrypted file **bar.gpg** (for example) by typing `gpg bar.gpg` and once it is decrypted with the correct password you can proceed ahead and remove `skilcrypt rmsrc bar` the source file **bar** that was encrypted in **bar.gpg**.
+Before invoking the **rmsrc** option I would advise you to test just one randomly encrypted file **bar.gpg** (for example) by typing `cp -r bar.gpg /tmp; gpg /tmp/bar.gpg` and once it is decrypted with the correct password you can proceed ahead and remove `skilcrypt rmsrc bar` the source file **bar** that was encrypted in **bar.gpg**.
 
 Available options: encrypt, decrypt, rmsrc, rmgpg
+rmsrc  --  remove the source files and leave only the encrypted one
+rmgpg  --  remove the encrypted files and leave only the source one
+
+The program can handle single/multiple filenames and paths.
 
 ```
 
-# Make sure to "quote" filenames or paths that have 'sp A ces' in their names
+# Make sure to "q uo te" filenames or paths that have 'sp A ces' in their names
 skillcrypt encrypt random-file.tbz2 folder1 "New File.tar.gz" folder2 'New Folder'
 
 ```
