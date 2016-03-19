@@ -18,7 +18,7 @@ Here are some real facts that made me to write skilcrypt:  I was abroad for half
 
 As long as you have access to GnuPG or any program based on GnuPG you will be able to encrypt and decrypt your files, no matter wheter you used skilcrypt or not.
 
-## Usage
+## NOTES
 By default skilcrypt will **not overwrite** your files, no matter wheter you use the encryption or decryption options.
 
 Feel free to use the **rmgpg** and **rmsrc** options once you verified that everything is correctly encrypted/decrypted.
@@ -27,6 +27,9 @@ As I said the program will not overwrite your files, so if **foo.tar** and **foo
 
 Before invoking the **rmsrc** option I would advise you to test just one randomly encrypted file **bar.gpg** (for example) by typing `cp -r bar.gpg /tmp; gpg /tmp/bar.gpg` and once it is decrypted with the correct password you can proceed ahead and remove `skilcrypt rmsrc bar` the source file **bar** that was encrypted in **bar.gpg**.
 
+If you supplied folder for encryption it will be crawled and any single **file** inside that folder will be standalone encrypted.
+
+## Usage
 Available options: encrypt, decrypt, rmsrc, rmgpg
 
 rmsrc  --  remove the source files and leave only the encrypted one
