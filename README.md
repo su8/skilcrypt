@@ -16,10 +16,10 @@ Here are some real facts that made me to write skilcrypt:  I was abroad for half
 
 [eCryptfs](https://defuse.ca/audits/ecryptfs.htm) and [EncFS](https://defuse.ca/audits/encfs.htm) are pretty much out of the game.
 
-As long as you have access to GnuPG or any program based on GnuPG you will be able to encrypt and decrypt your files, no matter wheter you used skilcrypt or not.
+As long as you have access to GnuPG or any program based on GnuPG you will be able to encrypt and decrypt your files, no matter whether you used skilcrypt or not.
 
 ## NOTES
-By default skilcrypt will **not overwrite** your files, no matter wheter you use the encryption or decryption options.
+By default skilcrypt will **not overwrite** your files, no matter whether you use the encryption or decryption options.
 
 Feel free to use the **rmgpg** and **rmsrc** options once you verified that everything is correctly encrypted/decrypted.
 
