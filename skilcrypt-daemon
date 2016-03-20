@@ -28,21 +28,41 @@
 # MA 02110-1301, USA.
 
 
-find /tmp/re/datest -type f -neweram /tmp/re/datest2/ &> /dev/null
+# Adjust those variables
+SOURCE_FILES="$HOME/Documents/cloud"
+ENCRYPTED_FILES="$HOME/encrypted_cloud_files"
+PASSWORD_FILE=""
 
-[[ $? == 0 ]] && {
 
-    cd /tmp/re/datest
+### Don't touch anything below this line ###
 
-    # make the dirs
-    find . -type d -print0|xargs -0 -I{} mkdir -p /tmp/re/datest2/{}
+while true
+do
+    declare -a _check_filez
+    _check_filez=(`find ${SOURCE_FILES} -type f -neweram ${ENCRYPTED_FILES}`)
 
-    # encrypt the changed/newer files
-    find . -type f -neweram /tmp/re/datest2/ -print0|\
-        xargs -0 -I{} /home/frost/skilcrypt encrypt pwf /tmp/pws {}
+    [[ ! -z "${_check_filez[@]}" ]] && {
 
-    # move them
-    find . -type f -name "*.gpg" -print0|\
-        xargs -0 -I{} mv --force {} /tmp/re/datest2/{}
+        cd ${SOURCE_FILES}
 
-}
+        # make the dirs
+        find . -type d -print0 | \
+            xargs -0 -I{} mkdir -p ${ENCRYPTED_FILES}/{}
+
+        # encrypt the changed/newer files
+        find . -type f -neweram ${ENCRYPTED_FILES}/ -print0 | xargs -0 -I{} \
+            gpg --batch --quiet --passphrase-file "${PASSWORD_FILE}" \
+            --cert-digest-algo SHA512 --cipher-algo AES256 \
+            --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
+            --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
+
+        # Now move them
+        find . -type f -name "*.gpg" -print0 | \
+            xargs -0 -I{} mv --force {} ${ENCRYPTED_FILES}/{}
+
+    }
+
+    # Be resource friendly
+    sleep 3
+
+done
