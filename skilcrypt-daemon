@@ -36,13 +36,12 @@ PASSWORD_FILE='/tmp/pws'
 
 ### Don't touch anything below this line ###
 
-# TODO: touch -d 1 min ago
 [[ ! -d "${ENCRYPTED_FILES}" ]] && {
     mkdir -p "${ENCRYPTED_FILES}"
 
     # Make the directory older than the source one
     # in order to encrypt and copy all $SOURCE_FILES
-    touch -d "3 minutes ago" "${ENCRYPTED_FILES}"
+    touch -d "30 years ago" "${ENCRYPTED_FILES}"
 }
 
 while true
@@ -52,27 +51,40 @@ do
 
     [[ ! -z "${_check_filez[@]}" ]] && {
 
-        cd ${SOURCE_FILES}
+        cd "${SOURCE_FILES}"
+
+        #TODO: [[ $? ]] && _newly_created for 
+        # start without dirs in first place
+        # This is just a short reminder to me
 
         # make the dirs
-        find . -type d -print0 | \
-            xargs -0 -I{} mkdir -p ${ENCRYPTED_FILES}/{}
+        find . -type d -neweram ${ENCRYPTED_FILES} -print0 | \
+            xargs -0 -I{} mkdir -p "${ENCRYPTED_FILES}/"{}
 
-        echo 'calling gpg'
+        # Newly created ${ENCRYPTED_FILES} dir
+        # Don't create this directory on your own !
+        [[ -z ${_newly_created} ]] && {
+            find "${ENCRYPTED_FILES}" -type d -print0 | \
+                xargs -0 -I{} touch -d "30 years ago" {}
+                _newly_created='n'
+        }
 
         # encrypt the changed/newer files
-        find . -type f -neweram ${ENCRYPTED_FILES}/ -print0 | xargs -0 -I{} \
+        find "${SOURCE_FILES}" -type f -neweram ${ENCRYPTED_FILES}/ -print0 | xargs -0 -I{} \
             gpg --batch --quiet --passphrase-file "${PASSWORD_FILE}" \
             --cert-digest-algo SHA512 --cipher-algo AES256 \
             --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
             --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 --symmetric {}
 
-        echo 'encryption done'
+        # if ${SOURCE_FILES} become 'newer' than
+        # ${ENCRYPTED_FILES} that will cause re-encryption
+        # of the particular file(s).
+        find "${ENCRYPTED_FILES}" -type d -print0 | \
+            xargs -0 -I{} touch -am {}
 
         # Now move them
         find . -type f -name "*.gpg" -print0 | \
             xargs -0 -I{} mv --force {} ${ENCRYPTED_FILES}/{}
-
     }
 
     # Be resource friendly
