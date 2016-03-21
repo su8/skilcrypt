@@ -28,7 +28,9 @@ skillcrypt encrypt random-file.tbz2 folder1 "New File.tar.gz" folder2 'New Folde
 # skilcrypt-daemon
 This fellow is suitable if you constantly edit & save files and want them to be automatically encrypted and ready for transfer A.S.A.P.
 
-Whenever files are put inside $SOURCE_FILES they will be encrypted instantly, just make sure that you've edited the $PASSWORD_FILE (`echo 'beLoud' > /tmp/pws`).
+Whenever files (not ending with **.gpg**) are put inside the $SOURCE_FILES folder, they will be encrypted instantly in the background without your interaction, just make sure that you've edited the $PASSWORD_FILE (`echo 'beLoud' > /tmp/pws`).
+
+I use this daemon to gather all files across my usb thumb drives and cd/dvd discs in one place and have them encrypted instantly, without re-launching the skilcrypt script again and again. Cry me a river, "viva da cloud".
 
 The script will run in infinite loop, it's resource friendly don't worry.
 
@@ -45,7 +47,7 @@ skilcrypt encrypt/decrypt pwf /tmp/password file1 file2 folder3
 
 ```
 
-## NOTES
+## NOTES (not for the daemon)
 By default skilcrypt will **not overwrite** your files, no matter whether you use the encryption or decryption options.
 
 Feel free to use the **rmgpg** and **rmsrc** options once you verified that everything is correctly encrypted/decrypted.
