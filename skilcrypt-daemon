@@ -27,6 +27,7 @@ PASSWORD_FILE='/tmp/pws'
 [[ ! -d "${SOURCE_FILES}" ]] && mkdir --mode=700 "${SOURCE_FILES}"
 [[ ! -f "${PASSWORD_FILE}" ]] && exit 1
 declare -a _check_filez
+declare -a _new_size
 
 while true
 do
@@ -46,15 +47,17 @@ do
                 for z in {1..5}
                 do
                     sleep 0.2
-                    new_size=$(stat -c %s "${x}")
+                    _new_size[${z}]=$(stat -c %s "${x}")
+                done
 
-                    [[ "${new_size}" == "${orig_size}" ]] && {
+                for z in "${_new_size[@]}"
+                do
+                    [[ "${z}" != "${orig_size}" ]] && {
                         apollo='return to earth'
                         break
                     }
                 done
-
-                [[ -z "${apollo}" ]] && continue
+                [[ ! -z "${apollo}" ]] && continue
 
                 gpg --batch --quiet --yes --passphrase-file "${PASSWORD_FILE}" \
                 --cert-digest-algo SHA512 --cipher-algo AES256 \
