@@ -26,7 +26,7 @@ TRACK_FILE_CHANGES="$HOME/.file_db"
 
 
 ### Don't touch anything below this line ###
-[[ ! -d "${DECRYPTED_FILES}" ]] && mkdir --mode=700 "${DECRYPTED_FILES}"
+[[ ! -d "${DECRYPTED_FILES}" ]] && mkdir -p --mode=700 "${DECRYPTED_FILES}"
 [[ ! -f "${PASSWORD_FILE}" ]] && { printf '%s\n' 'Missing password file'; exit 1 ;}
 declare -a _check_lockfile_db1
 declare -a _check_lockfile_db2
@@ -78,7 +78,7 @@ do
 
     [[ -z "${_fdb_arr}" ]] && __init_changes && continue
 
-    # Encrypt all files if $DECRYPTED_FILES is empty
+    # Encrypt all files if $ENCRYPTED_FILES is empty
     _check_filez=(`find "${ENCRYPTED_FILES}" -type f -name "*.gpg"`)
     [[ -z "${_check_filez[@]}" ]] && {
         IFS=$'\n'
@@ -88,7 +88,7 @@ do
                 [[ ! -f "${x}" ]] && continue
 
                 _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
-                [[ ! -d "${_new_place%/*}" ]] && mkdir --mode=700 "${_new_place%/*}"
+                [[ ! -d "${_new_place%/*}" ]] && mkdir -p --mode=700 "${_new_place%/*}"
 
                 gpg --batch --quiet --yes --passphrase-file "${PASSWORD_FILE}" \
                 --cert-digest-algo SHA512 --cipher-algo AES256 \
@@ -140,7 +140,7 @@ do
                 }
 
                 _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
-                [[ ! -d "${_new_place%/*}" ]] && mkdir --mode=700 "${_new_place%/*}"
+                [[ ! -d "${_new_place%/*}" ]] && mkdir -p --mode=700 "${_new_place%/*}"
 
                 gpg --batch --quiet --yes --passphrase-file "${PASSWORD_FILE}" \
                 --cert-digest-algo SHA512 --cipher-algo AES256 \
@@ -148,8 +148,9 @@ do
                 --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 \
                  --output "${_new_place}".gpg --symmetric "${x}"
 
-
-                sed -i "s|${x};${_da_size}|${x};`stat -c %s ${x}`|g" "${TRACK_FILE_CHANGES}"
+                [[ $? == 0 ]] && [[ " ${_new_size[@]} " =~ " `stat -c %s ${x}` " ]] {
+                    sed -i "s|${x};${_da_size}|${x};`stat -c %s ${x}`|g" "${TRACK_FILE_CHANGES}"
+                }
                 #rm -rf "${x}"
             }
         }
@@ -157,6 +158,10 @@ do
 
     done
     unset IFS
+
+    # TODO: update and merge the database in __init_changes function
+    # Leave just one IFS. Don't do anything until the database is empty.
+    #compare ~/.file_db /tmp/db |gawk '/^+/ {if (NR > 3) {gsub("+",""); print $0 }}' > /tmp/newdb
 
     # Be resource friendly
     sleep 1
