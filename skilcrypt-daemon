@@ -19,7 +19,7 @@
 
 
 # Adjust those variables
-SOURCE_FILES="/$HOME/encrypted_cloud"
+SOURCE_FILES="$HOME/encrypted_cloud"
 PASSWORD_FILE='/tmp/pws'
 
 

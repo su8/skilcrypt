@@ -9,7 +9,7 @@ Your hands are not tied to any OS. GPG can be installed in most major operating 
 # skilcrypt-daemon (inspired by EncFS)
 This fellow is suitable if you constantly edit & save files and want them to be automatically encrypted and ready for transfer A.S.A.P.
 
-Whenever files (not ending with **.gpg**) are put inside the $SOURCE_FILES folder, they will be encrypted instantly in the background without your interaction, just make sure that you've edited the $PASSWORD_FILE (`echo 'beLoud' > /tmp/pws`).
+Whenever files (not ending with **.gpg**) are put inside the $SOURCE_FILES folder, they will be encrypted instantly in the background without your interaction, just make sure that you've edited the variable $PASSWORD_FILE. Please use the [diceware](https://en.wikipedia.org/wiki/Diceware) method for creating passwords.
 
 The script will run in infinite loop, it's resource friendly don't worry.
 

@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+
+# Copyright 03/26/2016 Aaron Caffrey https://github.com/wifiextender
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+#set -x
+
+# Adjust those variables
+DECRYPTED_FILES="/tmp/Documents/Private"
+ENCRYPTED_FILES="$HOME/testdisk3"
+PASSWORD_FILE='/tmp/pws'
+TRACK_FILE_CHANGES="$HOME/.file_db"
+
+
+### Don't touch anything below this line ###
+[[ ! -d "${DECRYPTED_FILES}" ]] && mkdir --mode=700 "${DECRYPTED_FILES}"
+[[ ! -f "${PASSWORD_FILE}" ]] && { printf '%s\n' 'Missing password file'; exit 1 ;}
+declare -a _check_lockfile_db1
+declare -a _check_lockfile_db2
+declare -a _file_in_copy_arr
+declare -a _check_filez
+declare -a _new_size
+
+_fdb="$HOME/.file_db"
+declare -a _da_files
+declare -a _da_sizes
+declare -a _fdb_arr
+
+__is_file_in_copy() {
+    for y in {1..5}
+    do
+        sleep 1
+        _file_in_copy_arr[${y}]=$(date -r "${2}" +%F%R%S)
+    done
+
+    [[ "${1}" == 'db1' ]] && _check_lockfile_db1=("${_file_in_copy_arr[@]}") || \
+        _check_lockfile_db2=("${_file_in_copy_arr[@]}")
+}
+
+__init_changes() {
+    #rm -rf "${TRACK_FILE_CHANGES}"
+    # diff the file
+
+    find "${DECRYPTED_FILES}" -type f ! -name "*.gpg" | {
+        while read x
+        do
+            [[ -f "${x}" ]] && {
+                echo "${x};`stat -c %s ${x}`" >> "${TRACK_FILE_CHANGES}"
+            }
+        done
+    }
+}
+
+
+#[[ ! -f ${_fdb} ]] && __init_changes
+
+while true
+do
+
+    [[ ! -f "${TRACK_FILE_CHANGES}" ]] && __init_changes
+
+    IFS=$'\n'
+    _fdb_arr=(`<${TRACK_FILE_CHANGES}`)
+    unset IFS
+
+    [[ -z "${_fdb_arr}" ]] && __init_changes && continue
+
+    # Encrypt all files if $DECRYPTED_FILES is empty
+    _check_filez=(`find "${ENCRYPTED_FILES}" -type f -name "*.gpg"`)
+    [[ -z "${_check_filez[@]}" ]] && {
+        IFS=$'\n'
+        find "${DECRYPTED_FILES}" -type f ! -name "*.gpg" | {
+            while read x
+            do
+                [[ ! -f "${x}" ]] && continue
+
+                _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
+                [[ ! -d "${_new_place%/*}" ]] && mkdir --mode=700 "${_new_place%/*}"
+
+                gpg --batch --quiet --yes --passphrase-file "${PASSWORD_FILE}" \
+                --cert-digest-algo SHA512 --cipher-algo AES256 \
+                --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
+                --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 \
+                 --output "${_new_place}".gpg --symmetric "${x}"
+            done
+        }
+        unset IFS
+    }
+
+    IFS=$'\n'
+
+    for z in "${_fdb_arr[@]}"
+    do
+        x="${z%;*}"
+        _da_size="${z##*;}"
+        _da_size_two=$(stat -c %s "${x}")
+
+
+        [[ "${_da_size}" != "${_da_size_two}" ]] && {
+            _lock_file="${x//\//.}"
+            _lock_file="/tmp/${_lock_file// /.}-lock"
+
+            # Deleted files -> catch 'em
+            [[ ! -f "${x}" ]] && continue
+            [[ -f "${_lock_file}" ]] && [[ ! -f "${x}" ]] && rm -rf "${_lock_file}"
+
+            # Process the catched in-copy file
+            [[ -f "${_lock_file}" ]] && {
+                __is_file_in_copy 'db1'  "${x}"
+                __is_file_in_copy 'db2'  "${x}"
+
+                [[ " ${_check_lockfile_db1[@]} " =~ " ${_check_lockfile_db2[@]} " ]] \
+                    && rm -rf "${_lock_file}" || continue
+            } || {
+
+
+                # Is ${x} in-copy progress ?
+                for y in {1..5}
+                do
+                    sleep 0.2
+                    _new_size[${y}]=$(stat -c %s "${x}")
+                done
+
+                [[ ! " ${_new_size[@]} " =~ " ${_da_size_two} " ]] && {
+                    touch "${_lock_file}"
+                    continue
+                }
+
+                _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
+                [[ ! -d "${_new_place%/*}" ]] && mkdir --mode=700 "${_new_place%/*}"
+
+                gpg --batch --quiet --yes --passphrase-file "${PASSWORD_FILE}" \
+                --cert-digest-algo SHA512 --cipher-algo AES256 \
+                --digest-algo SHA512 --s2k-cipher-algo AES256 --s2k-digest-algo SHA512 \
+                --s2k-mode 3 --s2k-count 64981052 --compress-algo 0 \
+                 --output "${_new_place}".gpg --symmetric "${x}"
+
+
+                sed -i "s|${x};${_da_size}|${x};`stat -c %s ${x}`|g" "${TRACK_FILE_CHANGES}"
+                #rm -rf "${x}"
+            }
+        }
+
+
+    done
+    unset IFS
+
+    # Be resource friendly
+    sleep 1
+
+done
+unset PASSWORD_FILE
