@@ -16,29 +16,27 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
-#set -x
 
 # Adjust those variables
-DECRYPTED_FILES="/tmp/Documents/Private"
-ENCRYPTED_FILES="$HOME/testdisk3"
+DECRYPTED_FILES="$HOME/Documents/Private"
+ENCRYPTED_FILES="$HOME/encrypted_files"
 PASSWORD_FILE='/tmp/pws'
-TRACK_FILE_CHANGES="$HOME/.file_db"
+FILE_TO_TRACK_CHANGES="$HOME/.file_db"
 
 
 ### Don't touch anything below this line ###
 [[ ! -d "${DECRYPTED_FILES}" ]] && mkdir --parents --mode=700 "${DECRYPTED_FILES}"
 [[ ! -f "${PASSWORD_FILE}" ]] && { printf '%s\n' 'Missing password file'; exit 1 ;}
+
 declare -a _check_lockfile_db1
 declare -a _check_lockfile_db2
 declare -a _file_in_copy_arr
+declare -a _check_filez_two
 declare -a _check_filez
 declare -a _new_size
-
-declare -a _da_files
-declare -a _da_sizes
 declare -a _fdb_arr
 
-_fdb="${TRACK_FILE_CHANGES}"
+_fdb="${FILE_TO_TRACK_CHANGES}"
 _fdb_two="${_fdb}".bak
 
 IFS=$'\n'
@@ -64,14 +62,12 @@ __refresh_db() {
     find "${DECRYPTED_FILES}" -type f ! -name "*.gpg" | {
         while read x
         do
-            [[ -f "${x}" ]] && {
-                echo "${x};`stat -c %s ${x}`" >> "${_fdb}"
-            }
+            echo "${x};`stat -c %s ${x}`" >> "${_fdb}"
         done
 
         [[ ! -z "${first_init}" ]] && {
             diff -Nwaur "${_fdb}" "${_fdb_two}" | gawk '/^+/ {if (NR > 3) {gsub("+",""); print $0 }}' >> "${_fdb}"
-            sort --field-separator=';' --key=1,1 --unique "${_fdb}" > "${_fdb}".temp
+            sort --field-separator=';' --key=1,1 --unique "${_fdb}" --output="${_fdb}".temp
             mv "${_fdb}".temp "${_fdb}"
         }
     }
@@ -130,14 +126,14 @@ do
     for z in "${_fdb_arr[@]}"
     do
         x="${z%;*}"
-        repl_str="${z//\//\\\/}"     # / to \/
+        str_to_delete="${z//\//\\\/}"     # / to \/
         [[ ! -f "${x}" ]] && {
-            sed -i "/${repl_str}/d" "${_fdb}"
+            sed -i "/${str_to_delete}/d" "${_fdb}"
             continue
         }
 
-        _da_size="${z##*;}"
-        _da_size_two="$(stat -c %s ${x})"
+        _da_size_in_db="${z##*;}"
+        _da_size_now="$(stat -c %s ${x})"
         _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
 
         _lock_file="${x//\//.}"
@@ -145,7 +141,9 @@ do
 
         [[ -f "${_lock_file}" ]] && [[ ! -f "${x}" ]] && rm -rf "${_lock_file}"
 
-        [[ "${_da_size}" != "${_da_size_two}" ]] && {
+        [[ "${_da_size_in_db}" != "${_da_size_now}" ]] && {
+            touch "${_lock_file}"
+
             __is_file_in_copy 'db1'  "${x}"
             __is_file_in_copy 'db2'  "${x}"
 
@@ -153,10 +151,10 @@ do
                 && {
                     rm -rf "${_lock_file}"
                     sed -i "\$a${x};`stat -c %s ${x}`" "${_fdb}"
-                    sed -i "s|${x};${_da_size}|${x};`stat -c %s ${x}`|g" "${_fdb}"
+                    sed -i "s|${x};${_da_size_in_db}|${x};`stat -c %s ${x}`|g" "${_fdb}"
                 } || continue
 
-        } || [[ ! -f "${_new_place}".gpg ]] && {
+        } || [[ ! -f "${_new_place}".gpg ]] && [[ ! -f "${_lock_file}" ]] && {
 
             for y in {1..5}
             do
@@ -164,7 +162,7 @@ do
                 _new_size[${y}]=$(stat -c %s "${x}")
             done
 
-            [[ ! " ${_new_size[@]} " =~ " ${_da_size_two} " ]] && {
+            [[ ! " ${_new_size[@]} " =~ " ${_da_size_now} " ]] && {
                 touch "${_lock_file}"
                 continue
             }
@@ -179,7 +177,7 @@ do
 
             [[ $? == 0 ]] && [[ " ${_new_size[@]} " =~ " `stat -c %s ${x}` " ]] && {
                 sed -i "\$a${x};`stat -c %s ${x}`" "${_fdb}"
-                sed -i "s|${x};${_da_size}|${x};`stat -c %s ${x}`|g" "${_fdb}"
+                sed -i "s|${x};${_da_size_in_db}|${x};`stat -c %s ${x}`|g" "${_fdb}"
             }
         }
 
