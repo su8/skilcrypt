@@ -26,6 +26,7 @@ FILE_TO_TRACK_CHANGES="$HOME/.file_db"
 
 ### Don't touch anything below this line ###
 [[ ! -d "${DECRYPTED_FILES}" ]] && mkdir --parents --mode=700 "${DECRYPTED_FILES}"
+[[ ! -d "${ENCRYPTED_FILES}" ]] && mkdir --parents --mode=700 "${ENCRYPTED_FILES}"
 [[ ! -f "${PASSWORD_FILE}" ]] && { printf '%s\n' 'Missing password file'; exit 1 ;}
 
 declare -a _check_lockfile_db1
@@ -66,7 +67,8 @@ __refresh_db() {
         done
 
         [[ ! -z "${first_init}" ]] && {
-            diff -Nwaur "${_fdb}" "${_fdb_two}" | gawk '/^+/ {if (NR > 3) {gsub("+",""); print $0 }}' >> "${_fdb}"
+            diff -Nwaur "${_fdb}" "${_fdb_two}" | \
+                gawk '/^+/ {if (NR > 3) {gsub("+",""); print $0 }}' >> "${_fdb}"
             sort --field-separator=';' --key=1,1 --unique "${_fdb}" --output="${_fdb}".temp
             mv "${_fdb}".temp "${_fdb}"
         }
@@ -127,14 +129,16 @@ do
     do
         x="${z%;*}"
         str_to_delete="${z//\//\\\/}"     # / to \/
+        _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
+
         [[ ! -f "${x}" ]] && {
+            rm -rf "${_new_place}".gpg
             sed -i "/${str_to_delete}/d" "${_fdb}"
             continue
         }
 
         _da_size_in_db="${z##*;}"
         _da_size_now="$(stat -c %s ${x})"
-        _new_place="${x/${DECRYPTED_FILES}/${ENCRYPTED_FILES}}"
 
         _lock_file="${x//\//.}"
         _lock_file="/tmp/${_lock_file// /.}-lock"
